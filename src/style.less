@@ -4,7 +4,11 @@
 @muted: #77766f;
 
 @font-face { font-family: 'Kana Serif'; src: local('Yu Mincho'), local('Hiragino Mincho ProN'); }
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  // 禁止 iOS Safari 双击放大，同时保留滚动和双指缩放。
+  touch-action: manipulation;
+}
 body { margin: 0; min-width: 320px; min-height: 100vh; color: @ink; background: @cream; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Noto Sans SC', sans-serif; }
 button, input { font: inherit; }
 button { color: inherit; }
@@ -83,6 +87,7 @@ h1 em:after { content: ''; position: absolute; left: -3px; right: -4px; bottom: 
 .quiz-label { font-size: 11px; letter-spacing: .16em; color: @muted; }
 .kana { font-family: 'Kana Serif', serif; font-size: 145px; line-height: 1.35; margin: 15px 0 22px; }
 .quiz-card form { display: flex; width: 100%; max-width: 430px; }
+.mobile-answer, .virtual-keyboard { display: none; }
 .quiz-card input { flex: 1; min-width: 0; height: 53px; padding: 0 18px; background: #faf9f5; border: 1px solid #bbb7ad; outline: 0; text-align: center; font-size: 18px; letter-spacing: .08em; }
 .quiz-card input:focus { border-color: @ink; box-shadow: inset 0 -2px @ink; }
 .quiz-card form button { width: 90px; border: 0; background: @ink; color: white; cursor: pointer; }
@@ -111,6 +116,8 @@ footer { min-height: 58px; margin: 0 max(5vw,32px); border-top: 1px solid rgba(3
 footer i { flex: 1; height: 1px; background: #ded9ce; }
 
 @media (max-width: 760px) {
+  .page-shell.quiz-phase { position: fixed; inset: 0; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
+  .page-shell.quiz-phase main { min-height: 0; overflow: hidden; }
   .site-header { height: 60px; padding: 0 16px; } .header-note { display: none; }
   .brand { gap: 9px; font-size: 17px; } .brand-mark { width: 32px; height: 32px; font-size: 18px; }
   .setup-grid { display: block; padding: 24px 14px 36px; }
@@ -125,13 +132,22 @@ footer i { flex: 1; height: 1px; background: #ded9ce; }
   .behavior-setting { padding-top: 16px; }
   .primary { min-height: 50px; margin-top: 21px; }
   .stats-card { margin: 28px 4px 0; padding-top: 17px; } .error-list { grid-template-columns: 1fr; }
-  .quiz-wrap { padding: 19px 14px 24px; display: flex; min-height: calc(100vh - 60px); flex-direction: column; }
+  .quiz-wrap { padding: 10px 14px 16px; display: flex; flex-direction: column; }
   .quiz-top { flex: 0 0 auto; } .kana-progress { flex: 0 0 auto; margin: 10px 0 12px; padding: 9px 10px; gap: 5px; }
   .kana-progress span { width: 21px; height: 22px; font-size: 14px; }
-  .quiz-card { flex: 1; min-height: 0; padding: 25px 16px 20px; justify-content: center; box-shadow: none; }
-  .kana { font-size: clamp(100px, 35vw, 132px); margin: 5px 0 12px; line-height: 1.25; }
-  .quiz-card form { max-width: 100%; } .quiz-card input { height: 54px; font-size: 18px; } .quiz-card form button { width: 78px; }
-  .feedback { height: 55px; padding-top: 12px; } .key-hint { margin: 12px 0 0; }
+  .quiz-card { height: 300px; min-height: 0; padding: 14px 16px 8px; justify-content: flex-start; box-shadow: none; }
+  .kana { font-size: clamp(78px, 27vw, 104px); margin: 0 0 4px; line-height: 1.12; }
+  .quiz-card form { max-width: 100%; } .quiz-card input, .quiz-card form > button { display: none; }
+  .mobile-answer { display: grid; place-items: center; width: 100%; height: 48px; padding: 0 14px; overflow: hidden; background: #faf9f5; border: 1px solid #bbb7ad; font-size: 18px; letter-spacing: .08em; }
+  .mobile-answer .placeholder { color: #888; letter-spacing: 0; }
+  .feedback { height: 40px; padding-top: 5px; } .key-hint { display: none; }
+  .virtual-keyboard { display: flex; flex-direction: column; gap: 6px; margin-top: 9px; padding: 9px 7px 10px; background: rgba(215,211,202,.8); border-radius: 8px; }
+  .keyboard-row { display: flex; justify-content: center; gap: 4px; }
+  .virtual-keyboard button { min-width: 0; height: 41px; padding: 0; border: 1px solid rgba(55,54,48,.2); border-radius: 5px; background: #fffefa; box-shadow: 0 1px 1px rgba(37,39,37,.16); font-size: 15px; text-transform: uppercase; cursor: pointer; }
+  .keyboard-row button { flex: 0 1 34px; }
+  .keyboard-row .delete-key { flex-basis: 44px; font-size: 15px; }
+  .virtual-keyboard .submit-key { width: 100%; height: 43px; margin-top: 24px; border: 0; background: @ink; color: white; font-weight: 650; letter-spacing: .08em; }
+  .virtual-keyboard .submit-key:disabled { opacity: .4; }
   .done-wrap { padding: 38px 14px 30px; } .done-wrap h1 { font-size: 33px; }
   .result-card { margin: 30px 0 22px; padding: 22px 8px; } .result-card strong { font-size: 27px; }
   .done-actions { flex-direction: column; } .secondary { flex-basis: 48px; }

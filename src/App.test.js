@@ -82,4 +82,21 @@ describe('五十音练习', () => {
     expect(wrapper.find('.kana').text()).toBe('う')
     expect(wrapper.find('.kana-progress span').classes()).toContain('correct')
   })
+
+  it('可以使用移动端虚拟键盘输入、删除和提交答案', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const wrapper = mount(App)
+    await enterQuiz(wrapper)
+
+    const keys = wrapper.findAll('.virtual-keyboard .keyboard-row button')
+    await keys.find(key => key.text() === 'i').trigger('click')
+    expect(wrapper.find('.mobile-answer').text()).toBe('i')
+
+    await wrapper.find('.delete-key').trigger('click')
+    expect(wrapper.find('.mobile-answer').text()).toBe('输入罗马音')
+
+    await keys.find(key => key.text() === 'i').trigger('click')
+    await wrapper.find('.submit-key').trigger('click')
+    expect(wrapper.find('.progress-copy').text()).toContain('1 / 46')
+  })
 })

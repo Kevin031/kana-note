@@ -32,6 +32,23 @@ const progressEl = ref(null)
 const sessionErrors = ref({})
 let feedbackTimer
 const lifetimeErrors = ref(JSON.parse(localStorage.getItem('kana-errors') || '{}'))
+const keyboardRows = [
+  ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+  ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+  ['z', 'x', 'c', 'v', 'b', 'n', 'm'],
+]
+
+function focusAnswer() {
+  if (!window.matchMedia?.('(max-width: 760px)').matches) inputEl.value?.focus()
+}
+
+function typeLetter(letter) {
+  answer.value += letter
+}
+
+function deleteLetter() {
+  answer.value = answer.value.slice(0, -1)
+}
 
 const selectedCount = computed(() => buildPool().length)
 const current = computed(() => queue.value[0])
@@ -74,7 +91,7 @@ function start() {
   answer.value = ''
   feedback.value = null
   phase.value = 'quiz'
-  nextTick(() => inputEl.value?.focus())
+  nextTick(focusAnswer)
 }
 
 function submit() {
@@ -108,7 +125,7 @@ function submit() {
   clearTimeout(feedbackTimer)
   feedbackTimer = setTimeout(() => { feedback.value = null }, 700)
   if (!queue.value.length) phase.value = 'done'
-  else nextTick(() => inputEl.value?.focus())
+  else nextTick(focusAnswer)
 }
 
 watch(() => current.value?.id, async () => {
@@ -129,7 +146,7 @@ function resetStats() {
 </script>
 
 <template>
-  <div class="page-shell">
+  <div class="page-shell" :class="{ 'quiz-phase': phase === 'quiz' }">
     <header class="site-header">
       <button class="brand" @click="phase = 'setup'" aria-label="返回首页">
         <span class="brand-mark">あ</span><span>かな帖</span>
@@ -199,9 +216,19 @@ function resetStats() {
           <div class="kana">{{ current?.kana }}</div>
           <form @submit.prevent="submit">
             <input ref="inputEl" v-model="answer" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="输入罗马音" aria-label="输入罗马音">
+            <div class="mobile-answer" role="textbox" aria-label="已输入的罗马音" aria-readonly="true">
+              <span v-if="answer">{{ answer }}</span><span v-else class="placeholder">输入罗马音</span>
+            </div>
             <button type="submit" :disabled="!answer.trim()">确认</button>
           </form>
           <div class="feedback" :class="[{ show: feedback }, feedback?.ok ? 'correct' : 'wrong']"><b>{{ feedback?.text }}</b><span v-if="feedback && !feedback.ok">已移到后面，稍后再试</span></div>
+        </div>
+        <div class="virtual-keyboard" aria-label="罗马音虚拟键盘">
+          <div v-for="(row, index) in keyboardRows" :key="index" class="keyboard-row">
+            <button v-for="letter in row" :key="letter" type="button" @click="typeLetter(letter)">{{ letter }}</button>
+            <button v-if="index === 2" type="button" class="delete-key" aria-label="删除" @click="deleteLetter">删除</button>
+          </div>
+          <button type="button" class="submit-key" :disabled="!answer.trim()" @click="submit">确认</button>
         </div>
         <p class="key-hint"><kbd>Enter</kbd> 提交答案</p>
       </section>
