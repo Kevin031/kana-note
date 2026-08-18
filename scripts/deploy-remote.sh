@@ -5,12 +5,17 @@ set -euo pipefail
 readonly SITE_HOST="${1:?缺少站点域名}"
 readonly REMOTE_ROOT="${2:?缺少部署目录}"
 readonly RELEASE_ID="${3:?缺少发布版本}"
+readonly COMMIT_SHA="${4:?缺少 Git commit SHA}"
 readonly INCOMING_PATH="${REMOTE_ROOT}/incoming/${RELEASE_ID}"
 readonly RELEASE_PATH="${REMOTE_ROOT}/releases/${RELEASE_ID}"
 readonly NGINX_CONFIG="/www/server/panel/vhost/nginx/${SITE_HOST}.conf"
 readonly UPLOADED_CONFIG="${REMOTE_ROOT}/incoming/nginx.conf"
 
-if [[ "${REMOTE_ROOT}" != "/www/wwwroot/${SITE_HOST}" || ! "${RELEASE_ID}" =~ ^[0-9]{14}$ ]]; then
+if [[ "${SITE_HOST}" != "kana.kevinlau.cn" \
+  || "${REMOTE_ROOT}" != "/www/wwwroot/${SITE_HOST}" \
+  || ! "${COMMIT_SHA}" =~ ^[0-9a-f]{40}$ \
+  || "${RELEASE_ID}" != "${RELEASE_ID//[^0-9a-f-]/}" \
+  || ! "${RELEASE_ID}" =~ ^[0-9]{14}-[0-9a-f]{12}$ ]]; then
   echo "错误：部署参数不合法。"
   exit 1
 fi
@@ -22,6 +27,7 @@ fi
 
 mkdir -p "${REMOTE_ROOT}/releases"
 mv "${INCOMING_PATH}" "${RELEASE_PATH}"
+printf '%s\n' "${COMMIT_SHA}" > "${RELEASE_PATH}/.git-commit"
 chown -R www:www "${RELEASE_PATH}"
 
 config_created=0

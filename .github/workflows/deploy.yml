@@ -1,0 +1,93 @@
+name: Production Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 运行测试
+        run: pnpm test
+
+      - name: 构建生产版本
+        run: pnpm build
+
+      - name: 配置 SSH
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SERVER_KNOWN_HOSTS: ${{ secrets.SERVER_KNOWN_HOSTS }}
+          SERVER_PORT: ${{ vars.SERVER_PORT || '22' }}
+        run: |
+          set -euo pipefail
+          test -n "${SERVER_HOST}"
+          test -n "${SERVER_USERNAME}"
+          test -n "${SERVER_SSH_KEY}"
+          test -n "${SERVER_KNOWN_HOSTS}"
+          install -d -m 700 "${HOME}/.ssh"
+          printf '%s\n' "${SERVER_SSH_KEY}" > "${HOME}/.ssh/kana_deploy"
+          printf '%s\n' "${SERVER_KNOWN_HOSTS}" > "${HOME}/.ssh/known_hosts"
+          chmod 600 "${HOME}/.ssh/kana_deploy" "${HOME}/.ssh/known_hosts"
+          {
+            echo "Host kana-production"
+            echo "  HostName ${SERVER_HOST}"
+            echo "  User ${SERVER_USERNAME}"
+            echo "  Port ${SERVER_PORT}"
+            echo "  IdentityFile ${HOME}/.ssh/kana_deploy"
+            echo "  IdentitiesOnly yes"
+            echo "  BatchMode yes"
+            echo "  StrictHostKeyChecking yes"
+            echo "  UserKnownHostsFile ${HOME}/.ssh/known_hosts"
+          } > "${HOME}/.ssh/config"
+          chmod 600 "${HOME}/.ssh/config"
+
+      - name: 发布到生产服务器
+        env:
+          DEPLOY_SSH_TARGET: kana-production
+          DEPLOY_SKIP_BUILD: "1"
+          DEPLOY_COMMIT_SHA: ${{ github.sha }}
+        run: bash scripts/deploy.sh
+
+      - name: 写入发布摘要
+        if: success()
+        run: |
+          {
+            echo "## 生产发布成功"
+            echo ""
+            echo "- 站点：https://kana.kevinlau.cn/"
+            echo "- Commit：\`${GITHUB_SHA}\`"
+            echo "- Run：https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: 清理 SSH 凭据
+        if: always()
+        run: rm -f "${HOME}/.ssh/kana_deploy" "${HOME}/.ssh/config" "${HOME}/.ssh/known_hosts"
