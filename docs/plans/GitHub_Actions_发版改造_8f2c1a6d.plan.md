@@ -105,7 +105,7 @@ flowchart LR
 - [x] 固定 Node/pnpm 工具链，并使发布脚本同时适配本机和无 SSH alias 的 GitHub runner。
 - [x] 完善远端发布标识、参数校验和提交追溯信息，保持原子切换与最近 5 版清理。
 - [x] 新增 PR/main 的 CI 工作流，并验证 frozen install、Vitest 和 Vite build。
-- [ ] 新增 `main` 合入后完全自动执行的 production 部署工作流，并完成并发锁、严格 SSH 校验、部署、健康检查及密钥清理。
-- [ ] 为当前仓库生成独立 SSH key，并按 `../next-blog` 命名配置 Repository Secrets/Variables、分支保护及服务器最小权限部署账号。
+- [x] 新增 `main` 合入后完全自动执行的 production 部署工作流，并完成并发锁、严格 SSH 校验、部署、健康检查及密钥清理。
+- [ ] 为当前仓库生成独立 SSH key，并按 `../next-blog` 命名配置 Repository Secrets/Variables、分支保护及服务器最小权限部署账号。已完成专用密钥、服务器授权、4 个 Repository Secrets、`SERVER_PORT` Variable 和真实部署验证；GitHub 在保存 `main` 分支保护规则时要求账号二次验证，待用户完成验证码后保存。
 - [x] 更新 README 中的发版、Secrets、排错和人工回滚说明。
 - [ ] 完成 PR 检查、首次手动发布、并发、受控失败和人工回滚验收。
