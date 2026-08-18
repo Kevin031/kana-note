@@ -50,12 +50,19 @@ function deleteLetter() {
   answer.value = answer.value.slice(0, -1)
 }
 
+const kanaRoma = Object.fromEntries(groups.flatMap(group =>
+  ['hira', 'kata'].flatMap(script =>
+    [...group[script]].map((kana, i) => [kana, group.roma[i].replaceAll('|', '/')])
+  )
+))
+
 const selectedCount = computed(() => buildPool().length)
 const current = computed(() => queue.value[0])
 const progress = computed(() => total.value ? Math.round(mastered.value / total.value * 100) : 0)
 const progressItems = computed(() => timeline.value)
 const topErrors = computed(() => Object.entries(lifetimeErrors.value)
-  .sort((a, b) => b[1] - a[1]).slice(0, 6).map(([kana, count]) => ({ kana, count })))
+  .sort((a, b) => b[1] - a[1]).slice(0, 6)
+  .map(([kana, count]) => ({ kana, count, roma: kanaRoma[kana] || '' })))
 const sessionTop = computed(() => Object.entries(sessionErrors.value)
   .sort((a, b) => b[1] - a[1]).map(([kana, count]) => ({ kana, count })))
 
@@ -195,8 +202,9 @@ function resetStats() {
           <p v-if="!topErrors.length" class="empty">这里会记下经常答错的假名。<br>现在还是干干净净的一页。</p>
           <div v-else class="error-list">
             <div v-for="(item, index) in topErrors" :key="item.kana" class="error-row">
-              <span class="rank">0{{ index + 1 }}</span><b>{{ item.kana }}</b>
-              <div><i :style="{ width: Math.max(12, item.count / topErrors[0].count * 100) + '%' }"></i></div>
+              <span class="rank">0{{ index + 1 }}</span>
+              <span class="error-kana"><b>{{ item.kana }}</b><small>{{ item.roma }}</small></span>
+              <div class="error-bar"><i :style="{ width: Math.max(12, item.count / topErrors[0].count * 100) + '%' }"></i></div>
               <span>{{ item.count }} 次</span>
             </div>
           </div>
