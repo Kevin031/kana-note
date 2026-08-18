@@ -83,6 +83,20 @@ describe('五十音练习', () => {
     expect(wrapper.find('.kana-progress span').classes()).toContain('correct')
   })
 
+  it('错误手帖在假名旁显示罗马音', async () => {
+    localStorage.setItem('kana-errors', JSON.stringify({ し: 3, づ: 2, ア: 1 }))
+    const wrapper = mount(App)
+
+    const rows = wrapper.findAll('.error-row')
+    expect(rows).toHaveLength(3)
+    expect(rows[0].find('b').text()).toBe('し')
+    expect(rows[0].find('small').text()).toBe('shi')
+    expect(rows[1].find('b').text()).toBe('づ')
+    expect(rows[1].find('small').text()).toBe('zu/du')
+    expect(rows[2].find('b').text()).toBe('ア')
+    expect(rows[2].find('small').text()).toBe('a')
+  })
+
   it('可以使用移动端虚拟键盘输入、删除和提交答案', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const wrapper = mount(App)
